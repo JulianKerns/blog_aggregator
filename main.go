@@ -28,14 +28,9 @@ func main() {
 	}
 
 	mux.HandleFunc("GET /v1/healthz", readinessHandler)
+	mux.HandleFunc("GET /v1/err", errHandler)
 
 	log.Printf("Serving on port: %s\n", serverPort)
 	log.Fatal(server.ListenAndServe())
 
-}
-
-func readinessHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
 }
