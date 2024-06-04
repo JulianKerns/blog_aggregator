@@ -4,13 +4,9 @@ import (
 	"net/http"
 )
 
-type ReadinessAndErr struct {
-	Status string `json:"status"`
-}
-
 func readinessHandler(w http.ResponseWriter, r *http.Request) {
-	respondWithJSON(w, http.StatusOK, ReadinessAndErr{
-		Status: "ok",
+	respondWithJSON(w, http.StatusOK, map[string]string{
+		"status": "ok",
 	})
 }
 

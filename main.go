@@ -22,7 +22,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	server := http.Server{
+	server := &http.Server{
 		Addr:    ":" + serverPort,
 		Handler: mux,
 	}
