@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -28,7 +27,7 @@ func (cfg *apiConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 	userUUID := uuid.New()
 
 	// Creating the User to the database
-	ctx := context.Background()
+
 	timeNow := time.Now().UTC()
 	var userDB database.CreateUserParams = database.CreateUserParams{
 		ID:        userUUID,
@@ -36,7 +35,7 @@ func (cfg *apiConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 		UpdatedAt: timeNow,
 		Name:      params.Name,
 	}
-	specificUser, err := cfg.DB.CreateUser(ctx, userDB)
+	specificUser, err := cfg.DB.CreateUser(r.Context(), userDB)
 	if err != nil {
 		log.Println("Could not write the User to the database")
 		respondWithError(w, http.StatusInternalServerError, "Error on the server-side, could not write to the database")

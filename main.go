@@ -38,6 +38,7 @@ func main() {
 	mux.HandleFunc("GET /v1/healthz", readinessHandler)
 	mux.HandleFunc("GET /v1/err", errHandler)
 	mux.HandleFunc("POST /v1/users", config.CreateUserHandler)
+	mux.HandleFunc("GET /v1/users", config.GetUserByApiKey)
 
 	server := &http.Server{
 		Addr:    ":" + serverPort,
