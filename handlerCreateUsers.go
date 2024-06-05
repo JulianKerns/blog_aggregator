@@ -11,13 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-//type User struct {
-//	ID        uuid.UUID `json:"id"`
-//	CreatedAt time.Time `json:"created_at"`
-//	UpdatedAt time.Time `json:"updated_at"`
-//	Name      string    `json:"name"`
-//}
-
 func (cfg *apiConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	//Decoding the request body
 	type parameter struct {
@@ -49,6 +42,7 @@ func (cfg *apiConfig) CreateUserHandler(w http.ResponseWriter, r *http.Request) 
 		respondWithError(w, http.StatusInternalServerError, "Error on the server-side, could not write to the database")
 		return
 	}
-	respondWithJSON(w, http.StatusCreated, specificUser)
+	respondUser := databaseUsertoUser(specificUser)
+	respondWithJSON(w, http.StatusCreated, respondUser)
 
 }
