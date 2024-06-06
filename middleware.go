@@ -23,7 +23,7 @@ func (cfg *apiConfig) middlewareAuth(handler authedHandler) http.Handler {
 
 		if errUser != nil {
 			log.Println("Could not get the user from the database")
-			respondWithError(w, http.StatusInternalServerError, "ApiKey not present or could not retrieve the data")
+			respondWithError(w, http.StatusNotFound, "ApiKey not present or could not retrieve the user")
 			return
 		}
 		handler(w, r, specificUser)
