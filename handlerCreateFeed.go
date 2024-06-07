@@ -10,6 +10,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type Feed_FeedFollow struct {
+	Feed       Feed       `json:"feed"`
+	FeedFollow FeedFollow `json:"feed_follow"`
+}
+
 func (cfg *apiConfig) CreateFeedHandler(w http.ResponseWriter, r *http.Request, user database.User) {
 	//Decoding the request body
 	type parameter struct {
@@ -24,11 +29,9 @@ func (cfg *apiConfig) CreateFeedHandler(w http.ResponseWriter, r *http.Request, 
 		respondWithError(w, http.StatusBadRequest, "Wrong format for the request")
 		return
 	}
-	// Generating a UUID
+
+	// Writing the Feed to the database
 	feedUUID := uuid.New()
-
-	// Creating the User to the database
-
 	timeNow := time.Now().UTC()
 	var feedDB database.CreateFeedParams = database.CreateFeedParams{
 		ID:        feedUUID,
@@ -45,6 +48,27 @@ func (cfg *apiConfig) CreateFeedHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 	respondFeed := databaseFeedtoFeed(specificFeed)
-	respondWithJSON(w, http.StatusCreated, respondFeed)
+
+	// Writing a FeedFollow to the created Feed by default
+	feedFollowUUID := uuid.New()
+	var feedFollowDB database.CreateFeedFollowParams = database.CreateFeedFollowParams{
+		ID:        feedFollowUUID,
+		UserID:    user.ID,
+		FeedID:    feedUUID,
+		CreatedAt: timeNow,
+		UpdatedAt: timeNow,
+	}
+	specificFeedFollow, err := cfg.DB.CreateFeedFollow(r.Context(), feedFollowDB)
+	if err != nil {
+		log.Println("Could not write the FeedFollow to the database")
+		respondWithError(w, http.StatusInternalServerError, "Could not write to the database, FeedFollow may already exist")
+		return
+	}
+	respondFeedFollow := databaseFeedFollowtoFeedFollow(specificFeedFollow)
+
+	respondWithJSON(w, http.StatusCreated, Feed_FeedFollow{
+		Feed:       respondFeed,
+		FeedFollow: respondFeedFollow,
+	})
 
 }
