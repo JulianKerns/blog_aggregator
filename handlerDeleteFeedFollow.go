@@ -23,7 +23,10 @@ func (cfg *apiConfig) DeleteFeedFollow(w http.ResponseWriter, r *http.Request, u
 		return
 	}
 
-	errDelete := cfg.DB.DeleteFeedFollow(r.Context(), feedFollowID)
+	errDelete := cfg.DB.DeleteFeedFollow(r.Context(), database.DeleteFeedFollowParams{
+		ID:     feedFollowID,
+		UserID: user.ID,
+	})
 	if errDelete != nil {
 		log.Println("Could not delete the record!")
 		respondWithError(w, http.StatusInternalServerError, "Could not delete record from the Database")
