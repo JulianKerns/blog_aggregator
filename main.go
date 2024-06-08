@@ -45,6 +45,11 @@ func main() {
 	mux.Handle("GET /v1/feed_follows", config.middlewareAuth(config.GetAllUserFeedFollowsHandler))
 	mux.Handle("DELETE /v1/feed_follows/{feedFollowID}", config.middlewareAuth(config.DeleteFeedFollow))
 
+	errFetch := config.FetchFeeds()
+	if errFetch != nil {
+		return
+	}
+
 	server := &http.Server{
 		Addr:    ":" + serverPort,
 		Handler: mux,
