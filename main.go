@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	database "github.com/JulianKerns/blog_aggregator/internal/database"
 	"github.com/joho/godotenv"
@@ -45,15 +46,14 @@ func main() {
 	mux.Handle("GET /v1/feed_follows", config.middlewareAuth(config.GetAllUserFeedFollowsHandler))
 	mux.Handle("DELETE /v1/feed_follows/{feedFollowID}", config.middlewareAuth(config.DeleteFeedFollow))
 
-	errFetch := config.FetchFeeds()
-	if errFetch != nil {
-		return
-	}
-
 	server := &http.Server{
 		Addr:    ":" + serverPort,
 		Handler: mux,
 	}
+
+	const limitFetching int = 10
+	const betweenFetching time.Duration = time.Minute
+	go StartWorker(dbQueries, limitFetching, betweenFetching)
 
 	log.Printf("Serving on port: %s\n", serverPort)
 	log.Fatal(server.ListenAndServe())
