@@ -34,11 +34,43 @@ func ScrapingFeed(db *database.Queries, wg *sync.WaitGroup, feed database.Feed) 
 
 }
 
+// Custom decoder for the PubDate so it works with the time.Time type
+
+type PubDate struct {
+	time.Time
+}
+
+func (pb *PubDate) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var v string
+	err := d.DecodeElement(&v, &start)
+	if err != nil {
+		return err
+	}
+	layouts := []string{
+		time.RFC1123Z,
+		time.RFC1123,
+		"Mon, 02 Jan 2006 15:04:05 MST",
+		"Mon, 02 Jan 2006 15:04:05 -0700",
+		"2006-01-02T15:04:05Z07:00",
+	}
+	var parsedTime time.Time
+	for _, layout := range layouts {
+		parsedTime, err = time.Parse(layout, v)
+		if err == nil {
+			*pb = PubDate{parsedTime}
+			return nil
+		}
+	}
+	return fmt.Errorf("could not parse date: %v", v)
+}
+
 type Item struct {
-	XMLName xml.Name `xml:"item"`
-	Text    string   `xml:",chardata"`
-	Title   string   `xml:"title"`
-	Url     string   `xml:"link"`
+	XMLName     xml.Name `xml:"item"`
+	Text        string   `xml:",chardata"`
+	Title       string   `xml:"title"`
+	Url         string   `xml:"link"`
+	PublishedAt PubDate  `xml:"pubDate"`
+	Description string   `xml:"description"`
 }
 type RSS struct {
 	XMLName xml.Name `xml:"rss"`
@@ -66,7 +98,7 @@ func FetchingRSSFeed(Url string) (*RSS, error) {
 	params := RSS{}
 	errDecode := decoder.Decode(&params)
 	if errDecode != nil {
-		fmt.Printf("%v:Could not decode the XML body\n", errDecode)
+		fmt.Printf("%v: Could not decode the XML body\n", errDecode)
 		return nil, errors.New("could not decode the XML body")
 	}
 
