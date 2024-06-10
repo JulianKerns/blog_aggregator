@@ -5,10 +5,14 @@ import (
 	"database/sql"
 	"encoding/xml"
 	"errors"
-	"fmt"
+	"log"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/lib/pq"
+
+	"github.com/google/uuid"
 
 	database "github.com/JulianKerns/blog_aggregator/internal/database"
 )
@@ -16,9 +20,9 @@ import (
 func ScrapingFeed(db *database.Queries, wg *sync.WaitGroup, feed database.Feed) {
 	defer wg.Done()
 
-	feedPosts, err := FetchingRSSFeed(feed.Url)
+	RSSfeedStruct, err := FetchingRSSFeed(feed.Url)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		log.Printf("%v\n", err)
 		return
 	}
 	_, errMarking := db.MarkFeedFetched(context.Background(), database.MarkFeedFetchedParams{
@@ -27,10 +31,40 @@ func ScrapingFeed(db *database.Queries, wg *sync.WaitGroup, feed database.Feed) 
 		ID:            feed.ID,
 	})
 	if errMarking != nil {
-		fmt.Printf("%v\n", errMarking)
+		log.Printf("%v\n", errMarking)
 		return
 	}
-	fmt.Printf("%v RSSFeed collected ...Posts found: %v\n", feedPosts.Channel.Title, len(feedPosts.Channel.Items))
+
+	RSSPosts := RSSfeedStruct.Channel.Items
+	for _, RSSpost := range RSSPosts {
+		_, err := db.CreatePost(context.Background(), database.CreatePostParams{
+			ID:          uuid.New(),
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Title:       RSSpost.Title,
+			Url:         RSSpost.Url,
+			Description: sql.NullString{String: RSSpost.Description, Valid: true},
+			PublishedAt: RSSpost.PublishedAt.Time,
+			FeedID:      feed.ID,
+		})
+
+		if err != nil {
+			if pqErr, ok := err.(*pq.Error); ok {
+				if pqErr.Code == "23505" {
+					continue
+
+				} else {
+					log.Printf("Database Error: %v\n", pqErr)
+				}
+
+			}
+			log.Printf("Other Error: %v\n", err)
+
+		}
+
+	}
+	log.Printf("%v RSSFeed collected... Posts found: %v... Writing to Database!\n",
+		RSSfeedStruct.Channel.Title, len(RSSfeedStruct.Channel.Items))
 
 }
 
@@ -61,7 +95,7 @@ func (pb *PubDate) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("could not parse date: %v", v)
+	return errors.New("could not parse date")
 }
 
 type Item struct {
@@ -86,7 +120,7 @@ type RSS struct {
 func FetchingRSSFeed(Url string) (*RSS, error) {
 	response, err := http.Get(Url)
 	if err != nil {
-		fmt.Println("Get request not succesful")
+		log.Println("Get request not succesful")
 		return nil, errors.New("get request not succesful")
 	}
 	defer response.Body.Close()
@@ -98,7 +132,7 @@ func FetchingRSSFeed(Url string) (*RSS, error) {
 	params := RSS{}
 	errDecode := decoder.Decode(&params)
 	if errDecode != nil {
-		fmt.Printf("%v: Could not decode the XML body\n", errDecode)
+		log.Printf("%v: Could not decode the XML body\n", errDecode)
 		return nil, errors.New("could not decode the XML body")
 	}
 
