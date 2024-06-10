@@ -64,3 +64,43 @@ func databaseFeedFollowtoFeedFollow(feedFollow database.FeedFollow) FeedFollow {
 		UpdatedAt: feedFollow.UpdatedAt,
 	}
 }
+
+type Post struct {
+	ID          uuid.UUID `json:"id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Title       string    `json:"title"`
+	Url         string    `json:"url"`
+	Description string    `json:"description"`
+	PublishedAt time.Time `json:"published_at"`
+	FeedID      uuid.UUID `json:"feed_id"`
+}
+
+//func databasePosttoPost(post database.CreatePostParams) Post {
+//	return Post{
+//		//ID:          post.ID,
+//		//CreatedAt:   post.CreatedAt,
+//		//UpdatedAt:   post.UpdatedAt,
+//		Title:       post.Title,
+//		Url:         post.Url,
+//		Description: post.Description.String,
+//		PublishedAt: post.PublishedAt,
+//		//FeedID:      post.FeedID
+//	}
+//}
+
+type GetFeedPostsRow struct {
+	Title       string    `json:"title"`
+	Url         string    `json:"url"`
+	Description string    `json:"description"`
+	PublishedAt time.Time `json:"published_at"`
+}
+
+func databaseFeedPosttoFeedPost(post database.GetFeedPostsRow) GetFeedPostsRow {
+	return GetFeedPostsRow{
+		Title:       post.Title,
+		Url:         post.Url,
+		Description: post.Description.String,
+		PublishedAt: post.PublishedAt,
+	}
+}

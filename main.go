@@ -45,6 +45,7 @@ func main() {
 	mux.Handle("POST /v1/feed_follows", config.middlewareAuth(config.CreateFeedFollowHandler))
 	mux.Handle("GET /v1/feed_follows", config.middlewareAuth(config.GetAllUserFeedFollowsHandler))
 	mux.Handle("DELETE /v1/feed_follows/{feedFollowID}", config.middlewareAuth(config.DeleteFeedFollow))
+	mux.Handle("GET /v1/posts", config.middlewareAuth(config.GetUserPosts))
 
 	server := &http.Server{
 		Addr:    ":" + serverPort,
@@ -52,7 +53,7 @@ func main() {
 	}
 
 	const limitFetching int = 10
-	const betweenFetching time.Duration = time.Minute
+	const betweenFetching time.Duration = time.Minute * 5
 	go StartWorker(dbQueries, limitFetching, betweenFetching)
 
 	log.Printf("Serving on port: %s\n", serverPort)
