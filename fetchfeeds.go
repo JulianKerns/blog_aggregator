@@ -63,7 +63,7 @@ func ScrapingFeed(db *database.Queries, wg *sync.WaitGroup, feed database.Feed) 
 		}
 
 	}
-	log.Printf("%v RSSFeed collected... Posts found: %v... Writing to Database!\n",
+	log.Printf("%v RSSFeed collected... Posts found: %v... Writing to Database, if not already saved!\n",
 		RSSfeedStruct.Channel.Title, len(RSSfeedStruct.Channel.Items))
 
 }
